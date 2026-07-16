@@ -147,5 +147,254 @@ textarea.form-input{resize:vertical;min-height:120px}
 
   <div id="jobs-container"><div class="loading">Loading jobs…</div></div>
 </main>
+
 <!-- ADD JOB MODAL -->
-<div class="modal-overlay" id="add-modal"><div class="modal"><h3>➕ Add New Job</h3><div class="form-group"><label class="form-label">Job Title *</label><input class="form-input" id="f-title" placeholder="e.g. Senior Operations Manager" type="text"></div><div class="form-group"><label class="form-label">Company *</label><input class="form-input" id="f-company" placeholder="e.g. Delivery Hero" type="text"></div><div class="form-group"><label class="form-label">Location</label><input class="form-input" id="f-location" placeholder="e.g. Berlin, Germany" type="text"></div><div class="form-group"><label class="form-label">Job URL</label><input class="form-input" id="f-link" placeholder="https://..." type="url"></div><div class="form-group"><label class="form-label">Match Score (0-100)</label><input class="form-input" id="f-score" placeholder="e.g. 85" type="number" min="0" max="100"></div><div class="form-group"><label class="form-label">Job Description *</label><textarea class="form-input" id="f-jd" placeholder="Paste full job description here…"></textarea></div><div class="form-group"><label class="form-label">Source Site</label><input class="form-input" id="f-source" placeholder="e.g. LinkedIn, Indeed, StepStone" type="text"></div><div class="modal-actions"><button class="btn btn-primary" onclick="submitJob()" style="flex:1">Save Job</button><button class="btn btn-secondary" onclick="closeModal('add-modal')">Cancel</button></div></div></div><!-- JD VIEW MODAL --><div class="modal-overlay" id="jd-modal"><div class="modal jd-modal"><div style="display:flex;justify-content:space-between;align-items:start;gap:16px"><div><div id="jd-company" style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:4px"></div><h3 id="jd-title" style="font-size:20px"></h3></div><button class="btn btn-secondary" onclick="closeModal('jd-modal')" style="flex-shrink:0">Close</button></div><div id="jd-meta" style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap"></div><div class="jd-content" id="jd-body"></div><div style="margin-top:16px;display:flex;gap:8px"><a id="jd-apply-link" href="#" target="_blank" rel="noopener" class="btn btn-primary" style="flex:1;justify-content:center">Open Job Posting ↗</a><a id="jd-cv-link" href="#" class="btn btn-secondary" style="flex:1;justify-content:center">View
+<div class="modal-overlay" id="add-modal">
+  <div class="modal">
+    <h3>➕ Add New Job</h3>
+    <div class="form-group">
+      <label class="form-label">Job Title *</label>
+      <input class="form-input" id="f-title" placeholder="e.g. Senior Operations Manager" type="text">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Company *</label>
+      <input class="form-input" id="f-company" placeholder="e.g. Delivery Hero" type="text">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Location</label>
+      <input class="form-input" id="f-location" placeholder="e.g. Berlin, Germany" type="text">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Job URL (LinkedIn / Indeed / etc.)</label>
+      <input class="form-input" id="f-link" placeholder="https://..." type="url">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Match Score (0–100)</label>
+      <input class="form-input" id="f-score" placeholder="e.g. 85" type="number" min="0" max="100">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Job Description *</label>
+      <textarea class="form-input" id="f-jd" placeholder="Paste full job description here…"></textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Source Site</label>
+      <input class="form-input" id="f-source" placeholder="e.g. LinkedIn, Indeed, StepStone" type="text">
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-primary" onclick="submitJob()" style="flex:1">Save Job</button>
+      <button class="btn btn-secondary" onclick="closeModal('add-modal')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- JD VIEW MODAL -->
+<div class="modal-overlay" id="jd-modal">
+  <div class="modal jd-modal">
+    <div style="display:flex;justify-content:space-between;align-items:start;gap:16px">
+      <div>
+        <div id="jd-company" style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:4px"></div>
+        <h3 id="jd-title" style="font-size:20px"></h3>
+      </div>
+      <button class="btn btn-secondary" onclick="closeModal('jd-modal')" style="flex-shrink:0">Close</button>
+    </div>
+    <div id="jd-meta" style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap"></div>
+    <div class="jd-content" id="jd-body"></div>
+    <div style="margin-top:16px;display:flex;gap:8px">
+      <a id="jd-apply-link" href="#" target="_blank" rel="noopener" class="btn btn-primary" style="flex:1;justify-content:center">Open Job Posting ↗</a>
+      <a id="jd-cv-link" href="#" class="btn btn-secondary" style="flex:1;justify-content:center">View / Edit CV →</a>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js";
+import { getDatabase, ref, set, get, push, onValue, update } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCVFwDMNN4p0MXzcpJi7amNPOiBPCRDJRQ",
+  authDomain: "bellabona-logistic.firebaseapp.com",
+  databaseURL: "https://bellabona-logistic-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "bellabona-logistic",
+  storageBucket: "bellabona-logistic.firebasestorage.app",
+  messagingSenderId: "347002293332",
+  appId: "1:347002293332:web:4afccdc6e6c5690539b1c1"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+let allJobs = {};
+let currentFilter = 'all';
+
+// STATUS CONFIG
+const STATUS_LABELS = {
+  new: '🆕 New',
+  cv_ready: '📄 CV Ready',
+  reviewed: '👁 Reviewed',
+  applied: '✅ Applied',
+  interview: '🎤 Interview',
+  offer: '🎉 Offer',
+  rejected: '❌ Rejected'
+};
+
+// LOAD JOBS
+const jobsRef = ref(db, 'career-ops/jobs');
+onValue(jobsRef, (snap) => {
+  allJobs = snap.val() || {};
+  renderJobs();
+  updateStats();
+});
+
+function renderJobs() {
+  const container = document.getElementById('jobs-container');
+  const entries = Object.entries(allJobs)
+    .filter(([,j]) => currentFilter === 'all' || j.status === currentFilter)
+    .sort((a,b) => (b[1].dateAdded||'').localeCompare(a[1].dateAdded||''));
+
+  if (!entries.length) {
+    container.innerHTML = `<div class="empty-state">
+      <div class="empty-icon">🔍</div>
+      <div class="empty-title">${currentFilter === 'all' ? 'No jobs yet' : 'No ' + STATUS_LABELS[currentFilter] + ' jobs'}</div>
+      <div class="empty-sub">${currentFilter === 'all' ? 'Click "Add Job" to add a job manually, or let Claude hunt on LinkedIn for you.' : 'Change filter to see other jobs.'}</div>
+    </div>`;
+    return;
+  }
+
+  container.innerHTML = `<div class="jobs-grid">${entries.map(([id,j]) => jobCard(id,j)).join('')}</div>`;
+}
+
+function jobCard(id, j) {
+  const score = j.matchScore || 0;
+  const ringClass = score >= 75 ? 'match-high' : score >= 50 ? 'match-mid' : 'match-low';
+  const statusClass = 's-' + (j.status || 'new');
+  const jdShort = (j.jd || '').slice(0,200);
+  const cvLink = `cv-studio.html?jobId=${encodeURIComponent(id)}`;
+
+  const statusOptions = Object.keys(STATUS_LABELS).map(s =>
+    `<option value="${s}" ${j.status===s?'selected':''}>${STATUS_LABELS[s]}</option>`
+  ).join('');
+
+  return `<div class="job-card">
+    <div class="job-card-top">
+      <div style="flex:1;min-width:0">
+        <div class="job-company">${esc(j.company||'—')}</div>
+        <div class="job-title">${esc(j.title||'Untitled')}</div>
+      </div>
+      ${score ? `<div class="match-ring ${ringClass}">${score}%</div>` : ''}
+    </div>
+
+    <div class="job-meta">
+      <span class="status-badge ${statusClass}">${STATUS_LABELS[j.status||'new']}</span>
+      ${j.location ? `<span class="meta-pill">📍 ${esc(j.location)}</span>` : ''}
+      ${j.source ? `<span class="meta-pill">🌐 ${esc(j.source)}</span>` : ''}
+      ${j.dateAdded ? `<span class="meta-pill">📅 ${j.dateAdded}</span>` : ''}
+    </div>
+
+    ${jdShort ? `<div class="jd-preview">${esc(jdShort)}…</div>` : ''}
+
+    <div>
+      <label class="form-label" style="margin-bottom:4px">Update Status</label>
+      <select class="status-select" onchange="updateStatus('${id}', this.value)">${statusOptions}</select>
+    </div>
+
+    <div class="card-actions">
+      <button class="card-btn card-btn-jd" onclick="viewJD('${id}')">📋 View JD</button>
+      <a class="card-btn card-btn-cv" href="${cvLink}">📄 View CV</a>
+      ${j.link ? `<a class="card-btn card-btn-apply" href="${esc(j.link)}" target="_blank" rel="noopener">Apply ↗</a>` : ''}
+    </div>
+  </div>`;
+}
+
+function updateStats() {
+  const jobs = Object.values(allJobs);
+  document.getElementById('stat-total').textContent = jobs.length;
+  document.getElementById('stat-cv').textContent = jobs.filter(j=>j.status==='cv_ready'||j.status==='reviewed').length;
+  document.getElementById('stat-applied').textContent = jobs.filter(j=>j.status==='applied').length;
+  document.getElementById('stat-interview').textContent = jobs.filter(j=>j.status==='interview').length;
+}
+
+// FILTER
+window.setFilter = (f, el) => {
+  currentFilter = f;
+  document.querySelectorAll('.filter-tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  renderJobs();
+};
+
+// UPDATE STATUS
+window.updateStatus = async (id, status) => {
+  await update(ref(db, `career-ops/jobs/${id}`), { status });
+  toast('Status updated');
+};
+
+// VIEW JD
+window.viewJD = (id) => {
+  const j = allJobs[id];
+  if (!j) return;
+  document.getElementById('jd-company').textContent = j.company || '';
+  document.getElementById('jd-title').textContent = j.title || 'Job Detail';
+  document.getElementById('jd-body').textContent = j.jd || 'No description saved.';
+  document.getElementById('jd-meta').innerHTML = [
+    j.location ? `<span class="meta-pill">📍 ${esc(j.location)}</span>` : '',
+    j.source ? `<span class="meta-pill">🌐 ${esc(j.source)}</span>` : '',
+    j.dateAdded ? `<span class="meta-pill">📅 ${j.dateAdded}</span>` : '',
+    j.matchScore ? `<span class="meta-pill">🎯 ${j.matchScore}% match</span>` : ''
+  ].join('');
+  const applyLink = document.getElementById('jd-apply-link');
+  applyLink.href = j.link || '#';
+  applyLink.style.display = j.link ? '' : 'none';
+  document.getElementById('jd-cv-link').href = `cv-studio.html?jobId=${encodeURIComponent(id)}`;
+  document.getElementById('jd-modal').classList.add('open');
+};
+
+// ADD JOB MODAL
+window.openAddModal = () => document.getElementById('add-modal').classList.add('open');
+window.closeModal = (id) => document.getElementById(id).classList.remove('open');
+
+window.submitJob = async () => {
+  const title = document.getElementById('f-title').value.trim();
+  const company = document.getElementById('f-company').value.trim();
+  const jd = document.getElementById('f-jd').value.trim();
+  if (!title || !company || !jd) { toast('Title, Company and JD are required', true); return; }
+
+  const jobsRef2 = ref(db, 'career-ops/jobs');
+  const newRef = push(jobsRef2);
+  await set(newRef, {
+    title,
+    company,
+    location: document.getElementById('f-location').value.trim(),
+    link: document.getElementById('f-link').value.trim(),
+    matchScore: parseInt(document.getElementById('f-score').value)||0,
+    jd,
+    source: document.getElementById('f-source').value.trim(),
+    status: 'new',
+    dateAdded: new Date().toISOString().slice(0,10)
+  });
+
+  ['f-title','f-company','f-location','f-link','f-score','f-jd','f-source'].forEach(id => document.getElementById(id).value='');
+  closeModal('add-modal');
+  toast('Job added!');
+};
+
+// TOAST
+function toast(msg, isError=false) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.style.display = 'block';
+  el.style.borderColor = isError ? 'var(--red)' : 'var(--green)';
+  setTimeout(()=>el.style.display='none', 2500);
+}
+
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// Close modals on overlay click
+document.querySelectorAll('.modal-overlay').forEach(el => {
+  el.addEventListener('click', e => { if(e.target===el) el.classList.remove('open'); });
+});
+</script>
+</body>
+</html>
