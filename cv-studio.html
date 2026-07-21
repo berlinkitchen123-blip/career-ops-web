@@ -452,6 +452,7 @@
         padding: 0;
         margin: 0;
       }
+      /* Hide sidebar, banner, page-break markers — everything except the sheet */
       .designer-sidebar, .tip-banner, .page-break-indicator {
         display: none !important;
       }
@@ -459,20 +460,25 @@
         margin-left: 0 !important;
         padding: 0 !important;
         width: 100% !important;
+        align-items: stretch !important;
       }
       .resume-sheet {
         box-shadow: none !important;
-        padding: 0 !important;
+        /* DO NOT override padding — keep slider values so WYSIWYG matches PDF */
         margin: 0 !important;
         max-width: 100% !important;
+        min-height: unset !important;
+        width: 100% !important;
       }
       [contenteditable="true"]:hover {
         outline: none !important;
         background-color: transparent !important;
       }
+      /* Set @page margin to 0 — the sheet padding (set by sliders) controls all margins.
+         What you see on screen is exactly what prints. */
       @page {
         size: A4;
-        margin: 1.8cm;
+        margin: 0;
       }
     }
   </style>
